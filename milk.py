@@ -53,7 +53,6 @@ today = date.today()
 conn = st.connection('milk', type='sql', ttl=0)
 st.session_state.setdefault('mode', 'View')
 st.session_state.setdefault('prev_mode', 'View')
-st.session_state.setdefault('pending', 0)
 
 with pills:
     if not st.session_state.mode:
@@ -98,10 +97,9 @@ with conn.session as session, table:
     )
     if edit:
         changes = items.merge(updated_df, on=['id'], how='outer').query('selected_x != selected_y | item_x != item_y')
-        st.session_state['pending'] = len(changes)
 
         with save:
-            if floating_button(f'Save ({st.session_state.pending})', disabled=st.session_state.pending == 0,
+            if floating_button(f'Save ({len(changes)})', disabled=len(changes) == 0,
                                type='primary', icon=':material/save:'):
                 on_rows_change(session)
                 st.rerun()
