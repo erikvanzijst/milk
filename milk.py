@@ -5,6 +5,7 @@ import streamlit as st
 
 from sqlalchemy.sql import text
 from streamlit_extras.bottom_container import bottom
+from streamlit_extras.floating_button import floating_button
 
 from util import align
 
@@ -17,7 +18,8 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-buttons = st.container()
+pills = st.container()
+save = st.container()
 table = st.container()
 
 def on_rows_change(session):
@@ -49,10 +51,11 @@ def on_rows_change(session):
 
 today = date.today()
 conn = st.connection('milk', type='sql', ttl=0)
+st.session_state.setdefault('mode', 'View')
+st.session_state.setdefault('prev_mode', 'View')
+st.session_state.setdefault('pending', 0)
 
-with buttons:
-    st.session_state.setdefault('mode', 'View')
-    st.session_state.setdefault('prev_mode', 'View')
+with pills:
     if not st.session_state.mode:
         st.session_state.mode = st.session_state.prev_mode
     else:
@@ -83,17 +86,26 @@ with conn.session as session, table:
                               session.connection())
     items['selected'] = items['selected'].astype(bool)
 
-    st.data_editor(
+    updated_df = st.data_editor(
         disabled=not edit, key=f'editor_df',
         data=items if edit else items[items['selected'] == True],
         column_order=(['selected'] if edit else []) + ['item'],
-        hide_index=True, num_rows='dynamic' if edit else 'fixed', on_change=on_rows_change, args=[session],
-        width='content',
+        hide_index=True, num_rows='dynamic' if edit else 'fixed', width='content', height=500,
         column_config={
             'id': st.column_config.NumberColumn(disabled=True, width=1),
             'selected': st.column_config.CheckboxColumn(disabled=False, width=85, default=False),
             'item': st.column_config.TextColumn(disabled=False, width='medium', validate="^\\S+.*$", required=True)},
     )
+    if edit:
+        changes = items.merge(updated_df, on=['id'], how='outer').query('selected_x != selected_y | item_x != item_y')
+        st.session_state['pending'] = len(changes)
+
+        with save:
+            if floating_button(f'Save ({st.session_state.pending})', disabled=st.session_state.pending == 0,
+                               type='primary', icon=':material/save:'):
+                on_rows_change(session)
+                st.rerun()
+
 
 with bottom():
     align('<a href="https://github.com/erikvanzijst/milk">'
