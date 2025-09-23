@@ -88,10 +88,11 @@ with conn.session as session, table:
         data=items if edit else items[items['selected'] == True],
         column_order=(['selected'] if edit else []) + ['item'],
         hide_index=True, num_rows='dynamic' if edit else 'fixed', on_change=on_rows_change, args=[session],
+        width='content',
         column_config={
             'id': st.column_config.NumberColumn(disabled=True, width=1),
-            'selected': st.column_config.CheckboxColumn(disabled=False, width=1, default=False),
-            'item': st.column_config.TextColumn(disabled=False, width='large', validate="^\\S+.*$", required=True)},
+            'selected': st.column_config.CheckboxColumn(disabled=False, width=85, default=False),
+            'item': st.column_config.TextColumn(disabled=False, width='medium', validate="^\\S+.*$", required=True)},
     )
 
 with bottom():
