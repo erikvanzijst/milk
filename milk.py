@@ -10,14 +10,8 @@ from streamlit_extras.floating_button import floating_button
 
 from util import align
 
-st.markdown(
-    """
-    <style>
-    #MainMenu {visibility: hidden;}
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
+st.set_page_config(page_title='Got milk?', page_icon=':material/grocery:')
+st.markdown("""<style>#MainMenu {visibility: hidden;}</style>""", unsafe_allow_html=True)
 
 pills = st.container()
 save = st.container()
@@ -33,7 +27,6 @@ with pills:
         st.session_state.mode = st.session_state.prev_mode
     else:
         st.session_state.prev_mode = st.session_state.mode
-
     edit = st.pills(' ', ['View', 'Edit'], key='mode', label_visibility='collapsed') == 'Edit'
 
 with conn.session as session, table:
@@ -91,10 +84,9 @@ if edit:
                     'created_on': today,
                     'created_by': r.get('created_by')
                 } for _, r in updated_df.iterrows()]
-                session.execute(
-                    text('INSERT INTO milk (created_on, selected, item, created_by) '
-                         'VALUES (:created_on, :selected, :item, :created_by)'),
-                    rows)
+                session.execute(text('INSERT INTO milk (created_on, selected, item, created_by) '
+                                     'VALUES (:created_on, :selected, :item, :created_by)'),
+                                rows)
                 session.commit()
 
             st.rerun()
