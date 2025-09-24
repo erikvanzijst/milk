@@ -34,7 +34,7 @@ with pills:
     else:
         st.session_state.prev_mode = st.session_state.mode
 
-    edit = st.pills(' ', ['View', 'Edit'], key='mode') == 'Edit'
+    edit = st.pills(' ', ['View', 'Edit'], key='mode', label_visibility='collapsed') == 'Edit'
 
 with conn.session as session, table:
     session.execute(text(
