@@ -8,4 +8,5 @@ dependencies = [
     "sqlalchemy>=2.0.43",
     "streamlit>=1.49.1",
     "streamlit-extras>=0.7.8",
+    "streamlit-javascript>=0.1.5",
 ]
