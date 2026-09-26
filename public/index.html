@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Milk · Shopping list</title>
+  <meta name="description" content="A shopping list that remembers everything you ever buy.">
+  <meta name="theme-color" content="#f5f3ee" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#141412" media="(prefers-color-scheme: dark)">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Milk">
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body data-mode="shop">
+  <header class="top">
+    <div class="top-inner">
+      <div class="titles">
+        <h1 id="title">Shopping list</h1>
+        <p id="subtitle" class="subtitle">&nbsp;</p>
+      </div>
+      <button id="mode-btn" class="pill" type="button">Edit</button>
+    </div>
+    <div class="search-wrap">
+      <form id="add-form" class="search" autocomplete="off">
+        <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 4a7 7 0 1 0 4.2 12.6l4.1 4.1 1.4-1.4-4.1-4.1A7 7 0 0 0 11 4Zm0 2a5 5 0 1 1 0 10 5 5 0 0 1 0-10Z"/></svg>
+        <input id="query" type="text" enterkeyhint="done" placeholder="Add or find an item" aria-label="Add or find an item" maxlength="80">
+        <button id="clear-query" type="button" class="icon-btn" aria-label="Clear" hidden>
+          <svg viewBox="0 0 24 24"><path d="m6.4 5 5.6 5.6L17.6 5 19 6.4 13.4 12l5.6 5.6-1.4 1.4-5.6-5.6L6.4 19 5 17.6l5.6-5.6L5 6.4Z"/></svg>
+        </button>
+      </form>
+    </div>
+    <div class="toolbar">
+      <div class="segmented" role="radiogroup" aria-label="Sort items">
+        <button type="button" role="radio" data-sort="store">Store order</button>
+        <button type="button" role="radio" data-sort="alpha">A–Z</button>
+      </div>
+      <p id="hint" class="hint"></p>
+    </div>
+    <div class="progress" aria-hidden="true"><div id="progress-bar"></div></div>
+  </header>
+
+  <main>
+    <ul id="list" class="list" aria-live="polite"></ul>
+    <div id="empty" class="empty" hidden></div>
+  </main>
+
+  <div class="dock">
+    <button id="clear-done" class="pill pill-strong" type="button" hidden></button>
+  </div>
+
+  <div id="toast" class="toast" role="status" hidden>
+    <span id="toast-msg"></span>
+    <button id="toast-action" type="button" hidden>Undo</button>
+  </div>
+
+  <script src="/app.js" type="module"></script>
+</body>
+</html>

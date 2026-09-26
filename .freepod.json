@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "env": "prod",
+  "deployment": {
+    "id": "35c35402-e2ca-4f25-be98-eaac73b425cd",
+    "name": "custom-user-app-iddxbj"
+  },
+  "user_values": {
+    "hostname": "milk.deprutser.be"
+  }
+}
