@@ -12,9 +12,9 @@
   --danger: #c2412d;
   --shadow: 0 1px 2px rgb(40 35 20 / 6%), 0 1px 1px rgb(40 35 20 / 4%);
   --shadow-lift: 0 14px 34px rgb(40 35 20 / 18%), 0 3px 8px rgb(40 35 20 / 10%);
-  --radius: 14px;
-  --row-h: 58px;
-  --gap: 6px;
+  --radius: 12px;
+  --row-h: 46px;
+  --gap: 0px;
   --gutter: 16px;
   --font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
   color-scheme: light;
@@ -50,7 +50,7 @@ body {
   background: var(--bg);
   color: var(--ink);
   font-family: var(--font);
-  font-size: 17px;
+  font-size: 16px;
   line-height: 1.35;
   -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
@@ -230,30 +230,36 @@ main { padding-top: 10px; padding-bottom: calc(96px + env(safe-area-inset-bottom
   display: flex;
   flex-direction: column;
   gap: var(--gap);
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
 }
+.list:empty { display: none; }
 
 .row {
   position: relative;
   display: flex;
   align-items: center;
   min-height: var(--row-h);
-  background: var(--surface);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
   transition: background 0.2s, opacity 0.2s;
 }
+/* one grouped panel: rows are separated by hairlines, and only the panel's
+   outer corners are rounded */
+.row + .row { border-top: 1px solid var(--line); }
+.row:first-child { border-top-left-radius: var(--radius); border-top-right-radius: var(--radius); }
+.row:last-child { border-bottom-left-radius: var(--radius); border-bottom-right-radius: var(--radius); }
 
 .row-main {
   flex: 1;
   min-width: 0;
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
   align-self: stretch;
   border: 0;
   background: transparent;
   text-align: left;
-  padding: 10px 16px;
+  padding: 6px 14px;
   border-radius: inherit;
 }
 .row-main:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
@@ -270,17 +276,16 @@ main { padding-top: 10px; padding-bottom: calc(96px + env(safe-area-inset-bottom
   flex: none;
   display: grid;
   place-items: center;
-  width: 26px;
-  height: 26px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   border: 2px solid var(--ink-3);
   color: transparent;
   transition: background 0.18s, border-color 0.18s, transform 0.18s;
 }
-.check svg { width: 16px; height: 16px; }
+.check svg { width: 15px; height: 15px; }
 
 /* shop mode: checked-off items stay in place, but recede */
-.row.done { background: transparent; box-shadow: none; }
 .row.done .name {
   color: var(--ink-3);
   text-decoration: line-through;
@@ -297,7 +302,6 @@ main { padding-top: 10px; padding-bottom: calc(96px + env(safe-area-inset-bottom
 
 /* edit mode: on-list items are solid, catalog-only items are dashed and dim */
 body[data-mode="edit"] .row .check { border-style: dashed; color: var(--ink-3); }
-body[data-mode="edit"] .row.off { background: transparent; box-shadow: none; outline: 1.5px dashed var(--line); outline-offset: -1.5px; }
 body[data-mode="edit"] .row.off .name { color: var(--ink-2); }
 body[data-mode="edit"] .row.on .check {
   border-style: solid;
@@ -325,7 +329,7 @@ body[data-mode="edit"] .row.on .check {
   display: grid;
   place-items: center;
   width: 44px;
-  height: 48px;
+  height: 44px;
   color: var(--ink-3);
   cursor: grab;
   touch-action: none;
@@ -334,8 +338,7 @@ body[data-mode="edit"] .row.on .check {
 }
 .grip svg { width: 18px; height: 18px; }
 
-.row.editing { padding-left: 16px; gap: 14px; outline: 2px solid var(--accent); outline-offset: -2px; }
-body[data-mode="edit"] .row.editing.off { outline: 2px solid var(--accent); background: var(--surface); }
+.row.editing { padding-left: 14px; gap: 12px; outline: 2px solid var(--accent); outline-offset: -2px; }
 .name-input {
   flex: 1;
   min-width: 0;
@@ -349,7 +352,7 @@ body[data-mode="edit"] .row.editing.off { outline: 2px solid var(--accent); back
 }
 .row .save { color: var(--accent); }
 
-.row.suggest { background: var(--accent-soft); box-shadow: none; }
+.row.suggest { background: var(--accent-soft); }
 .row.suggest .name { color: var(--accent); font-weight: 650; }
 .row.suggest .check { border: 0; background: var(--accent); color: var(--accent-ink); }
 
@@ -363,6 +366,8 @@ body.dragging { user-select: none; -webkit-user-select: none; cursor: grabbing; 
   z-index: 5;
   box-shadow: var(--shadow-lift);
   background: var(--surface);
+  border-radius: var(--radius);
+  border-top-color: transparent;
   outline: none;
 }
 .list.sorting .row.lifted .grip { color: var(--accent); cursor: grabbing; }
