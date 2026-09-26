@@ -3,6 +3,7 @@ const ICONS = {
   plus: '<svg viewBox="0 0 24 24"><path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6z"/></svg>',
   trash: '<svg viewBox="0 0 24 24"><path d="M9 3h6l1 2h4v2H4V5h4l1-2Zm-3 6h12l-1 11a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L6 9Zm4 2v8h1.5v-8H10Zm2.5 0v8H14v-8h-1.5Z"/></svg>',
   grip: '<svg viewBox="0 0 24 24"><path d="M9 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Zm0 6.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Zm-1.5 8a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3ZM18 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0ZM16.5 13.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3ZM18 18.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z"/></svg>',
+  pencil: '<svg viewBox="0 0 24 24"><path d="M4 17.2V20h2.8l8.3-8.3-2.8-2.8L4 17.2Zm13.7-7.5a1 1 0 0 0 0-1.4L15.7 6.3a1 1 0 0 0-1.4 0l-1.5 1.5 2.8 2.8 2.1-1.9Z"/></svg>',
   basket: '<svg viewBox="0 0 24 24"><path d="M17.2 9 13 2.6l-1.7 1L15 9H9l3.7-5.4L11 2.6 6.8 9H2v2h1.2l1.9 8.6A2 2 0 0 0 7 21h10a2 2 0 0 0 2-1.4l1.9-8.6H22V9h-4.8Zm-.2 10H7l-1.8-8h13.6L17 19Z"/></svg>',
 };
 
@@ -95,10 +96,10 @@ function setItems(items) {
 }
 
 async function refresh() {
-  if (pending || drag) return;
+  if (pending || drag || editing) return;
   try {
     const items = await api("GET", "/api/items");
-    if (!pending && !drag) setItems(items);
+    if (!pending && !drag && !editing) setItems(items);
     state.loaded = true;
   } catch {
     if (!state.loaded) showToast("Couldn't load your list");
@@ -179,6 +180,31 @@ function moveItem(item, anchor, position) {
   );
 }
 
+let editing = null; // { id, draft } while a name is being edited
+
+function startRename(item) {
+  editing = { id: item.id, draft: item.name };
+  render();
+  const input = els.list.querySelector(".name-input");
+  input?.focus();
+  input?.select();
+}
+
+function finishRename(save) {
+  if (!editing) return;
+  const { id, draft } = editing;
+  editing = null;
+  const item = byId(id);
+  const name = draft.replace(/\s+/g, " ").trim();
+  if (!save || !item || !name || name === item.name) return render();
+  const clash = state.items.find((i) => i !== item && i.name.toLowerCase() === name.toLowerCase());
+  if (clash) {
+    showToast(`“${clash.name}” already exists`);
+    return render();
+  }
+  mutate(() => { item.name = name; }, () => api("PATCH", `/api/items/${id}`, { name }));
+}
+
 // ---------- rendering ----------
 
 function setMode(mode) {
@@ -222,6 +248,7 @@ function shopRow(item) {
 }
 
 function editRow(item, sortable) {
+  if (editing?.id === item.id) return renameRow(item);
   const li = el("li", `row ${item.on_list ? "on" : "off"}${item.id < 0 ? " pending" : ""}`);
   li.dataset.id = item.id;
 
@@ -233,6 +260,12 @@ function editRow(item, sortable) {
   main.addEventListener("click", () => toggleOnList(item));
 
   const actions = el("div", "row-actions");
+  const rename = el("button", "icon-btn", ICONS.pencil);
+  rename.type = "button";
+  rename.setAttribute("aria-label", `Rename ${item.name}`);
+  rename.addEventListener("click", () => startRename(item));
+  actions.append(rename);
+
   const del = el("button", "icon-btn del", ICONS.trash);
   del.type = "button";
   del.setAttribute("aria-label", `Delete ${item.name}`);
@@ -249,6 +282,31 @@ function editRow(item, sortable) {
   }
 
   li.append(main, actions);
+  return li;
+}
+
+function renameRow(item) {
+  const li = el("li", `row editing ${item.on_list ? "on" : "off"}`);
+  li.dataset.id = item.id;
+  const input = el("input", "name-input");
+  Object.assign(input, { type: "text", value: editing.draft, maxLength: 80, enterKeyHint: "done" });
+  input.setAttribute("aria-label", `New name for ${item.name}`);
+  input.addEventListener("input", () => { editing.draft = input.value; });
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") { e.preventDefault(); finishRename(true); }
+    if (e.key === "Escape") finishRename(false);
+  });
+  input.addEventListener("blur", () => finishRename(true));
+
+  const save = el("button", "icon-btn save", ICONS.check);
+  save.type = "button";
+  save.setAttribute("aria-label", "Save name");
+  save.addEventListener("pointerdown", (e) => e.preventDefault()); // keep focus; the click saves
+  save.addEventListener("click", () => finishRename(true));
+
+  const actions = el("div", "row-actions");
+  actions.append(save);
+  li.append(el("span", "check", item.on_list ? ICONS.check : ICONS.plus), input, actions);
   return li;
 }
 
