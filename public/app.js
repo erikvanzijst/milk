@@ -60,6 +60,10 @@ async function api(method, path, body) {
     headers: body ? { "content-type": "application/json" } : undefined,
     body: body ? JSON.stringify(body) : undefined,
   });
+  // 401: the Freepod session expired, so sign in again and come back here.
+  // 403: signed in, but not on the access list; the reloaded page explains.
+  if (res.status === 401) location.assign(`/.freepod/auth/login?rd=${encodeURIComponent(location.pathname)}`);
+  if (res.status === 403) location.reload();
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
   return data;

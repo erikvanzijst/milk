@@ -10,6 +10,16 @@ const MAX_NAME = 80;
 
 const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, max: 5 });
 
+// Freepod signs every visitor in and passes their verified email in
+// X-Freepod-Email, but any Freepod account can sign in. Only the addresses in
+// MILK_ALLOWED_EMAILS (separated by commas or whitespace) get in; when it is
+// empty or unset, nobody does. Locally there is no sign-in, so MILK_DEV_EMAIL
+// stands in for the header.
+const ALLOWED_EMAILS = new Set(
+  (process.env.MILK_ALLOWED_EMAILS || "").toLowerCase().split(/[\s,;]+/).filter(Boolean),
+);
+const DEV_EMAIL = process.env.MILK_DEV_EMAIL;
+
 async function migrate() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS items (
@@ -200,6 +210,49 @@ async function serveStatic(pathname, res) {
   }
 }
 
+function escapeHtml(text) {
+  return text.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+}
+
+function sendDenied(res, email) {
+  res.writeHead(403, { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" });
+  res.end(`<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1"><title>Milk · No access</title>
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<style>
+  :root { --bg: #f5f3ee; --ink: #1b1a17; --ink-2: #6b675e; --accent: #2e7d4f; color-scheme: light; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #141412; --ink: #f1eee6; --ink-2: #a8a397; --accent: #5cc48a; color-scheme: dark; } }
+  body { margin: 0; min-height: 100dvh; display: grid; place-items: center; background: var(--bg); color: var(--ink);
+    font: 16px/1.45 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; text-align: center; }
+  main { padding: 24px 16px; max-width: 420px; }
+  img { width: 64px; height: 64px; }
+  h1 { font-size: 1.5rem; letter-spacing: -0.02em; margin: 16px 0 8px; }
+  p { color: var(--ink-2); margin: 0 0 24px; overflow-wrap: anywhere; }
+  strong { color: var(--ink); font-weight: 600; }
+  a { display: inline-block; padding: 12px 22px; border-radius: 999px; background: var(--ink); color: var(--bg);
+    font-weight: 650; text-decoration: none; }
+</style></head><body><main>
+<img src="/icon.svg" alt="">
+<h1>This list is private</h1>
+<p>You're signed in as <strong>${escapeHtml(email)}</strong>, which doesn't have access. Ask the owner to add you, or sign in with a different account.</p>
+<a href="/.freepod/auth/logout?rd=/">Sign out</a>
+</main></body></html>`);
+}
+
+// Returns true when the request may proceed; otherwise it has already answered.
+function authorize(req, res, pathname) {
+  const email = (req.headers["x-freepod-email"] || DEV_EMAIL || "").trim().toLowerCase();
+  if (!email) {
+    send(res, 401, { error: "Not signed in" });
+    return false;
+  }
+  if (ALLOWED_EMAILS.has(email)) return true;
+  console.log(`access denied: ${email} ${req.method} ${pathname}`);
+  if (pathname.startsWith("/api/")) send(res, 403, { error: "No access" });
+  else sendDenied(res, email);
+  return false;
+}
+
 async function route(req, res) {
   const { pathname } = new URL(req.url, "http://x");
   const method = req.method;
@@ -208,6 +261,10 @@ async function route(req, res) {
     await pool.query("SELECT 1");
     return send(res, 200, { ok: true });
   }
+
+  // The page and the data are private; styles, script and icons hold neither.
+  const isPage = pathname === "/" || pathname === "/index.html";
+  if ((isPage || pathname.startsWith("/api/")) && !authorize(req, res, pathname)) return;
 
   if (pathname === "/api/items") {
     if (method === "GET") return send(res, 200, await allItems());
@@ -246,6 +303,9 @@ const server = http.createServer(async (req, res) => {
 });
 
 await migrate();
+console.log(ALLOWED_EMAILS.size
+  ? `access limited to ${ALLOWED_EMAILS.size} email address${ALLOWED_EMAILS.size === 1 ? "" : "es"}`
+  : "MILK_ALLOWED_EMAILS is empty: every request will be refused");
 server.listen(PORT, "0.0.0.0", () => console.log(`milk listening on :${PORT}`));
 
 for (const sig of ["SIGTERM", "SIGINT"]) {
