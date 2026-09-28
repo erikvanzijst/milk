@@ -6,6 +6,9 @@
     "name": "custom-user-app-iddxbj"
   },
   "user_values": {
-    "hostname": "milk.prutser.freepod.eu"
+    "hostname": "milk.prutser.freepod.eu",
+    "auth": {
+      "enabled": true
+    }
   }
 }
