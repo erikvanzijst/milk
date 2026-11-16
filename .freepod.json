@@ -1,14 +1,10 @@
 {
-  "version": 1,
-  "env": "prod",
-  "deployment": {
-    "id": "35c35402-e2ca-4f25-be98-eaac73b425cd",
-    "name": "custom-user-app-iddxbj"
+  "$schema": "https://freepod.eu/api/products/custom/project-schema",
+  "version": 2,
+  "deployment": "35c35402-e2ca-4f25-be98-eaac73b425cd",
+  "auth": {
+    "enabled": true
   },
-  "user_values": {
-    "hostname": "milk.prutser.freepod.eu",
-    "auth": {
-      "enabled": true
-    }
-  }
+  "name": "Milk",
+  "icon": "public/icon.png"
 }
