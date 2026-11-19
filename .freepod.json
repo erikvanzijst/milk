@@ -3,7 +3,8 @@
   "version": 2,
   "deployment": "35c35402-e2ca-4f25-be98-eaac73b425cd",
   "auth": {
-    "enabled": true
+    "enabled": true,
+    "access": "listed"
   },
   "name": "Milk",
   "icon": "public/icon.png"

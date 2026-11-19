@@ -14,22 +14,17 @@ catalog is renumbered in steps of 1024.
 
 ## Access
 
-The app runs behind "Sign in with Freepod" (`auth` in `.freepod.json`), which lets any
-Freepod account sign in. Only the addresses in `MILK_ALLOWED_EMAILS` (separated by commas
-or spaces, case-insensitive) can see or change the list; everyone else gets a "This list is
-private" page, and the attempt shows up in `freepod log`. When the var is empty or unset,
-nobody gets in.
-
-    freepod var set MILK_ALLOWED_EMAILS="alice@example.com,bob@example.com"
-
-Setting it rolls the deployment, so changes take effect within a minute.
+The app runs behind "Sign in with Freepod" with `"access": "listed"` (`auth` in
+`.freepod.json`), so Freepod admits only the deployment's owner and the people on its
+access list. Manage the list under **Access** on the Freepod dashboard. Changes take effect
+without a redeploy, and added people get an invitation email. Requests from anyone else
+never reach the app, so the app does no access checks of its own.
 
 ## Run locally
 
     npm install
-    DATABASE_URL=postgres://… PORT=8080 \
-      MILK_ALLOWED_EMAILS=dev@example.com MILK_DEV_EMAIL=dev@example.com npm start
+    DATABASE_URL=postgres://… PORT=8080 npm start
 
-There is no Freepod sign-in locally, so `MILK_DEV_EMAIL` stands in for the signed-in user.
+There is no sign-in locally; every request is served.
 
 Deployed to Freepod with `freepod deploy`; the schema is created at startup.
